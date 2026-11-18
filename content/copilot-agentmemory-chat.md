@@ -143,7 +143,3 @@ agentmemory stop --data-dir "${AM_DATA_DIR:?missing test directory}" --port "${A
 ```
 
 Stop the foreground wrapper with Ctrl-C and confirm its listener has closed. For a permanent install, configure your own user-service manager and verify the restarted worker’s effective route before connecting real agents.
-
-**Privacy boundary:** Loopback restricts incoming connections; it does not make chat inference local or disable Copilot tools. The SDK or CLI may retain session state after shutdown. Keep credentials, logs, and state out of repositories and blog attachments. Don’t forward the wrapper port, and use only data you’re permitted to send to GitHub.
-
-Sources: [wrapper source and MIT license](https://github.com/olohmann/ghcp-sdk-oai-wrapper) by Oliver Lohmann · [GitHub Copilot SDK](https://github.com/github/copilot-sdk) · [Agentmemory](https://github.com/rohitg00/agentmemory).
