@@ -4,42 +4,43 @@ Slug: copilot-agentmemory-chat
 Category: Tutorials
 Tags: Agentmemory, GitHub Copilot
 
-Agentmemory speaks the OpenAI chat completions API. A loopback-only wrapper translates its requests into GitHub Copilot calls through the Copilot SDK and CLI. The wrapper runs on your machine; GitHub handles the prompts.
+Agentmemory speaks the OpenAI chat completions API. The `ghcp-sdk-oai-wrapper` proxy translates its requests into GitHub Copilot calls through the Copilot SDK and CLI. The proxy runs on your machine; GitHub handles the prompts.
 
-This tutorial uses Agentmemory 0.9.33 and `ghcp-sdk-oai-wrapper` v0.4.2. On macOS, I verified that Agentmemory could compress an observation, persist it, and read back a session summary on the Copilot route. The steps below are a source-based recipe, not a freshly tested installation on every platform.
+On macOS, I verified that Agentmemory could compress an observation, persist it, and read back a session summary on the Copilot route. The steps below are a source-based recipe, not a freshly tested installation on every platform.
 
 ## 1. Prepare an isolated test account
 
-Use a fresh OS login with no connected agents, a POSIX-style shell, Git, Go 1.25.12 or newer, Node.js 20+, `curl`, `jq`, and `lsof`. Install the [Copilot CLI](https://github.com/github/copilot-cli) and authorize it for your Copilot account. Follow the [Agentmemory 0.9.33 installation instructions](https://www.npmjs.com/package/@agentmemory/agentmemory/v/0.9.33), including its native runtime prerequisites.
+Use a fresh OS login with no connected agents, a POSIX-style shell, Git, Go, Node.js, `curl`, `jq`, and `lsof`. Install the [Copilot CLI](https://github.com/github/copilot-cli) and authorize it for your Copilot account. Follow the [Agentmemory installation instructions](https://www.npmjs.com/package/@agentmemory/agentmemory), including its native runtime prerequisites.
 
-Why a separate login? Agentmemory 0.9.33 writes first-run preferences and `.env` under `~/.agentmemory` even if you pass a new `--data-dir`. Use the test account’s normal home, leave `AGENTMEMORY_ENV_FILE` unset, and start without inherited provider or endpoint overrides. Don’t point the tutorial at an existing store.
+Why a separate login? A new `--data-dir` isolates the store, but first-run preferences and `.env` can still live under `~/.agentmemory`. Use the test account’s normal home, leave `AGENTMEMORY_ENV_FILE` unset, and start without inherited provider or endpoint overrides. Don’t point the tutorial at an existing store.
 
-The examples use **8080** for the wrapper and **8081** for Agentmemory, not as requirements. Check both with `lsof -nP -iTCP:8080 -sTCP:LISTEN` and the same command for 8081. If either is occupied, pick another free port and substitute it wherever that service appears. The worker must share the host’s loopback network: inside a network-isolated container, `127.0.0.1` refers to the container, not the host. Don’t solve that mismatch by exposing the wrapper on all interfaces.
+The examples use **8080** for the wrapper and **8081** for Agentmemory. If either is occupied, choose a free port and substitute it throughout. The examples assume the worker can reach the wrapper at `127.0.0.1`. In a network-isolated container, that address refers to the container, not the host.
 
-## 2. Build the wrapper with a loopback listener
-
-The stock wrapper at this revision listens on `":" + cfg.Port`. That selects a port **on all interfaces**. Patch the address before you start it. From a new working directory:
+Fetch the wrapper source in a new working directory:
 
 ```sh
 git clone https://github.com/olohmann/ghcp-sdk-oai-wrapper.git
 cd ghcp-sdk-oai-wrapper
-git checkout --detach 16279dc08365a179a37884394b61738cb22bf975
 ```
 
-In [`cmd/server/main.go`](https://github.com/olohmann/ghcp-sdk-oai-wrapper/blob/16279dc08365a179a37884394b61738cb22bf975/cmd/server/main.go), change just this field:
+## 2. Optional: restrict the proxy to local connections
+
+Agentmemory doesn’t need a custom listener to use the proxy. This step is for safety: connecting to `127.0.0.1` tells the *client* where to connect, but it doesn’t stop the *server* from accepting connections on other interfaces. For a single-machine setup, a loopback-only listener keeps other machines from reaching the proxy. If the wrapper already binds to loopback, or you intentionally manage network access separately, skip to step 3.
+
+If `cmd/server/main.go` sets the listener address to `":" + cfg.Port`, change it before building:
 
 ```diff
 -		Addr:         ":" + cfg.Port,
 +		Addr:         "127.0.0.1:" + cfg.Port,
 ```
 
-Inspect `git diff`. If the listener address is the only change, build the binary from the repository root:
+## 3. Start the wrapper with two different credentials
+
+From the wrapper checkout, build the binary. This command works with or without the optional listener change:
 
 ```sh
-go build -ldflags '-X main.version=0.4.2' -o ./ghcp-sdk-oai-wrapper ./cmd/server
+go build -o ./ghcp-sdk-oai-wrapper ./cmd/server
 ```
-
-## 3. Start the wrapper with two different credentials
 
 | Credential | Who needs it | What it authorizes |
 | --- | --- | --- |
@@ -88,7 +89,7 @@ for path in /healthz /v1/models; do
 done
 ```
 
-Expect your wrapper listening only on `127.0.0.1`, **200** from `/healthz`, and **401** from `/v1/models` without credentials. If these differ, stop here. Now list the chat models your account can use. This sends the local header through standard input rather than putting the bearer in curl’s arguments:
+Confirm the listener belongs to your wrapper. If you chose local-only access, its address should be `127.0.0.1`, not `*`. Expect **200** from `/healthz` and **401** from `/v1/models` without credentials. Stop if the address or responses aren’t what you intended. Now list the chat models your account can use. This sends the local header through standard input rather than putting the bearer in curl’s arguments:
 
 ```sh
 (
@@ -116,7 +117,7 @@ OPENAI_MODEL=REPLACE_WITH_ID_FROM_MODEL_LIST
 OPENAI_API_KEY=REPLACE_WITH_SAME_LOCAL_BEARER_AS_WRAPPER
 ```
 
-Here `openai` names an API format, not a destination. Leave `OPENAI_REASONING_EFFORT` unset; the pinned wrapper doesn’t forward it.
+Here `openai` names an API format, not a destination.
 
 Start Agentmemory against a fresh directory. In the second terminal, keep these variables for shutdown:
 
@@ -127,7 +128,7 @@ AM_PORT=8081
 agentmemory --data-dir "${AM_DATA_DIR:?missing test directory}" --port "$AM_PORT"
 ```
 
-**During onboarding**, deselect all agents, explicitly choose **OpenAI**, leave automatic context injection off, and decline connections. In 0.9.33, **Skip** removes the provider selection; it doesn’t keep the value you prepared.
+**During onboarding**, deselect all agents, explicitly choose **OpenAI**, leave automatic context injection off, and decline connections.
 
 Before submitting a prompt, confirm the running worker uses your provider, chat URL, and model ID. On the native Compose path, inspect those three fields in `compose/worker-compose.yaml` under the test data directory and in its referenced `.agentmemory-filtered.env`. Match the config to the running worker; explicit `environment` entries take precedence. Check the bearer privately. Don’t dump entire environments into a terminal log or support ticket. A healthy wrapper is no use if the worker is calling a different endpoint.
 
@@ -145,4 +146,4 @@ Stop the foreground wrapper with Ctrl-C and confirm its listener has closed. For
 
 **Privacy boundary:** Loopback restricts incoming connections; it does not make chat inference local or disable Copilot tools. The SDK or CLI may retain session state after shutdown. Keep credentials, logs, and state out of repositories and blog attachments. Don’t forward the wrapper port, and use only data you’re permitted to send to GitHub.
 
-Sources: [pinned wrapper source and MIT license](https://github.com/olohmann/ghcp-sdk-oai-wrapper/tree/16279dc08365a179a37884394b61738cb22bf975) by Oliver Lohmann · [GitHub Copilot SDK](https://github.com/github/copilot-sdk) · [Agentmemory](https://github.com/rohitg00/agentmemory).
+Sources: [wrapper source and MIT license](https://github.com/olohmann/ghcp-sdk-oai-wrapper) by Oliver Lohmann · [GitHub Copilot SDK](https://github.com/github/copilot-sdk) · [Agentmemory](https://github.com/rohitg00/agentmemory).
