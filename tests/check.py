@@ -8,7 +8,7 @@ import shutil
 
 site = 'https://terencez127.github.io'
 base = Path('build')
-for route in ('index.html', 'archives.html', 'my-super-post.html', 'feeds/python.atom.xml', 'theme/css/journal.css'):
+for route in ('index.html', 'archives.html', 'copilot-agentmemory-chat.html', 'feeds/tutorials.atom.xml', 'theme/css/journal.css'):
     assert (base / route).is_file(), route
 for path in base.rglob('*.html'):
     html = path.read_text()
@@ -18,7 +18,7 @@ for path in base.rglob('*.html'):
 def entries(feed):
     return {link.get('href') for link in ET.parse(feed).findall('{*}entry/{*}link')}
 
-assert site + '/my-super-post.html' in entries(base / 'feeds/python.atom.xml')
+assert site + '/copilot-agentmemory-chat.html' in entries(base / 'feeds/tutorials.atom.xml')
 with TemporaryDirectory() as tmp:
     content = Path(tmp) / 'content'
     out = Path(tmp) / 'output'
@@ -29,4 +29,4 @@ with TemporaryDirectory() as tmp:
     assert 'Temporary verification paragraph.' in (out / (slug + '.html')).read_text()
     assert f'{site}/{slug}.html' in (out / 'index.html').read_text()
     assert f'{site}/{slug}.html' in entries(out / 'feeds/all.atom.xml')
-print('PASS: HTTPS production links, legacy article and feed, isolated Markdown → article + homepage + Atom.')
+print('PASS: HTTPS production links, first tutorial and feed, isolated Markdown → article + homepage + Atom.')
