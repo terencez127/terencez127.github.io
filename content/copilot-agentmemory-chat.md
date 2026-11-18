@@ -6,7 +6,7 @@ Tags: Agentmemory, GitHub Copilot
 
 Agentmemory speaks the OpenAI chat completions API. The `ghcp-sdk-oai-wrapper` proxy translates its requests into GitHub Copilot calls through the Copilot SDK and CLI. The proxy runs on your machine; GitHub handles the prompts.
 
-On macOS, I verified that Agentmemory could compress an observation, persist it, and read back a session summary on the Copilot route. The steps below are a source-based recipe, not a freshly tested installation on every platform.
+For the macOS test, I used Agentmemory 0.9.33 and `ghcp-sdk-oai-wrapper` v0.4.2. I verified that Agentmemory could compress an observation, persist it, and read back a session summary on the Copilot route. The steps below are a source-based recipe, not a freshly tested installation on every platform.
 
 ## 1. Prepare an isolated test account
 
