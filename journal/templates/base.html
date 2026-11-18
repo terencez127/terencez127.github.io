@@ -1,0 +1,6 @@
+<!doctype html>
+<html lang="{{ DEFAULT_LANG }}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}{{ SITENAME }}{% endblock %}</title>
+<link rel="stylesheet" href="{{ SITEURL }}/theme/css/journal.css"><link rel="alternate" type="application/atom+xml" title="{{ SITENAME }}" href="{{ SITEURL }}/{{ FEED_ALL_ATOM }}"></head>
+<body><a class="skip" href="#main">Skip to content</a><header><a class="site" href="{{ SITEURL }}/index.html">{{ SITENAME }}</a><nav aria-label="Journal"><a href="{{ SITEURL }}/archives.html">Archive</a><a href="{{ SITEURL }}/{{ FEED_ALL_ATOM }}">Atom feed</a></nav></header>
+<main id="main">{% block body %}{% endblock %}</main></body></html>

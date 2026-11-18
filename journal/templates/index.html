@@ -1,0 +1,2 @@
+{% extends 'base.html' %}{% from 'rows.html' import listing %}
+{% block body %}{% if articles %}{% set a = articles[0] %}<article><h1><a href="{{ SITEURL }}/{{ a.url }}">{{ a.title }}</a></h1><time datetime="{{ a.date.isoformat() }}">{{ a.date.strftime('%B %d, %Y') }}</time><div class="prose">{{ a.content.split('</p>')[0] | striptags | truncate(350) }}</div></article>{% if articles[1:] %}<section><h2>Earlier posts</h2>{{ listing(articles[1:], SITEURL) }}</section>{% endif %}{% else %}<h1>No posts yet</h1>{% endif %}{% endblock %}

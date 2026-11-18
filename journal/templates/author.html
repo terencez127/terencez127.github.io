@@ -1,0 +1,1 @@
+{% extends 'base.html' %}{% from 'rows.html' import listing %}{% block title %}{{ author }} | {{ SITENAME }}{% endblock %}{% block body %}<h1>{{ author }}</h1>{{ listing(articles, SITEURL) }}{% endblock %}
