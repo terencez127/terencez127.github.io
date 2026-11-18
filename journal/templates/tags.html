@@ -1,0 +1,1 @@
+{% extends 'base.html' %}{% from 'rows.html' import listing %}{% block title %}Tags | {{ SITENAME }}{% endblock %}{% block body %}<h1>Tags</h1>{% for item, posts in tags %}<p><a href="{{ SITEURL }}/{{ item.url }}">{{ item }}</a> ({{ posts|length }})</p>{% endfor %}{% endblock %}

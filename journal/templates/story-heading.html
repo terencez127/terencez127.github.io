@@ -1,0 +1,6 @@
+{% macro story_heading(post, root, linked=false) %}
+<div class="story-heading">
+  <h1>{% if linked %}<a href="{{ root }}/{{ post.url }}">{{ post.title }}</a>{% else %}{{ post.title }}{% endif %}</h1>
+  <div class="metadata"><a href="{{ root }}/{{ post.category.url }}">{{ post.category }}</a><time datetime="{{ post.date.isoformat() }}">{{ post.date.strftime('%B %d, %Y') }}</time></div>
+</div>
+{% endmacro %}

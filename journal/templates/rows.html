@@ -1,0 +1,1 @@
+{% macro listing(items, root) %}<ul class="entries">{% for a in items %}<li><time datetime="{{ a.date.isoformat() }}">{{ a.date.strftime('%b %d, %Y') }}</time><a href="{{ root }}/{{ a.url }}">{{ a.title }}</a></li>{% endfor %}</ul>{% endmacro %}
