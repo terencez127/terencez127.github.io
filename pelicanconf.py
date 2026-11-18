@@ -1,5 +1,6 @@
 AUTHOR = 'Terence'
-SITENAME = 'terencez127.github.io'
+SITENAME = 'It Worked Before Lunch'
+SITESUBTITLE = 'The phở place is across the street. I wasn’t gone long.'
 SITEURL = 'http://127.0.0.1:8000'
 PATH = 'content'
 OUTPUT_PATH = 'build/'
